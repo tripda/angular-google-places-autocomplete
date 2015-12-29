@@ -203,10 +203,13 @@ angular.module('google.places', [])
                                 });
                             });
                         } else {
+                            $timeout(function() {
+                                $scope.model = prediction.description;
+                            });
+
                             placesService.getDetails({ placeId: prediction.place_id }, function (place, status) {
                                 if (status == google.maps.places.PlacesServiceStatus.OK) {
                                     $scope.$apply(function () {
-                                        $scope.model = prediction.description;
                                         $scope.latModel = place.geometry.location.lat();
                                         $scope.lngModel = place.geometry.location.lng();
 
