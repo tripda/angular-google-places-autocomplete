@@ -1,6 +1,6 @@
 {
-  "name": "angular-google-places-autocomplete",
-  "version": "0.3.2",
+  "name": "tripda-google-place-autocomplete",
+  "version": "0.3.3",
   "main": [
       "./src/autocomplete.js",
       "./src/autocomplete.css"

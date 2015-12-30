@@ -38,6 +38,7 @@ angular.module('google.places', [])
                     latModel: '=?',
                     lngModel: '=?',
                     minLength: '=?',
+                    tooltipContent: '=?',
                     options: '=?',
                     forceSelection: '=?',
                     customPlaces: '=?',
@@ -65,6 +66,7 @@ angular.module('google.places', [])
                         $scope.options = $scope.options || {};
                         $scope.minLength = $scope.minLength || 0;
                         $scope.getPredictionsEnabled = true;
+                        $scope.componentFocused = false;
 
                         element.attr('autocomplete', 'off');
 
@@ -74,9 +76,10 @@ angular.module('google.places', [])
                     }());
 
                     function initEvents() {
-                        element.bind('keydown', onKeydown);
+                        element.bind('keyup', onKeyup);
                         element.bind('blur', onBlur);
                         element.bind('submit', onBlur);
+                        element.bind('focus', onFocus);
 
                         $scope.$watch('selected', select);
                     }
@@ -92,7 +95,10 @@ angular.module('google.places', [])
                             query: 'query',
                             predictions: 'predictions',
                             active: 'active',
-                            selected: 'selected'
+                            selected: 'selected',
+                            'min-length': 'minLength',
+                            'tooltip-content': 'tooltipContent',
+                            'component-focused': 'componentFocused'
                         });
 
                         $drawer = $compile(drawerElement)($scope);
@@ -105,7 +111,7 @@ angular.module('google.places', [])
                         controller.$render = render;
                     }
 
-                    function onKeydown(event) {
+                    function onKeyup(event) {
                         $scope.getPredictionsEnabled = true;
 
                         if ($scope.predictions.length === 0 || indexOf(hotkeys, event.which) === -1) {
@@ -164,7 +170,13 @@ angular.module('google.places', [])
                         }
                     }
 
+                    function onFocus() {
+                        $scope.componentFocused = true;
+                    }
+
                     function onBlur(event) {
+                        $scope.componentFocused = false;
+
                         if ($scope.predictions.length === 0) {
                             return;
                         }
@@ -232,10 +244,14 @@ angular.module('google.places', [])
                     function parse(viewValue) {
                         var requestParam;
 
-                        if (!(viewValue && isString(viewValue))) return viewValue;
-                        if ($scope.minLength > viewValue.length) return;
-
                         $scope.query = viewValue;
+
+                        if (!(viewValue && isString(viewValue))) return viewValue;
+                        if ($scope.minLength > viewValue.length) {
+                            clearPredictions();
+
+                            return;
+                        };
 
                         requestParam = angular.extend({ input: viewValue }, $scope.options);
                         clearTimeout(request);
@@ -395,11 +411,21 @@ angular.module('google.places', [])
 
     .directive('gPlacesAutocompleteDrawer', ['$window', '$document', function ($window, $document) {
         var TEMPLATE = [
-            '<div class="pac-container" ng-if="isOpen()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;" role="listbox" aria-hidden="{{!isOpen()}}">',
+            '<div class="pac-container bottom" ng-if="isOpenTooltip()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;">',
+            '<div class="arrow"></div>',
+            '<div class="pac-inner">',
+            '<div class="pac-content">{{tooltipContent}}</div>',
+            '</div>',
+            '</div>',
+            '<div class="pac-container bottom" ng-if="isOpen()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;" role="listbox" aria-hidden="{{!isOpen()}}">',
+            '<div class="arrow"></div>',
+            '<div class="pac-content">',
             '  <div class="pac-item" g-places-autocomplete-prediction index="$index" prediction="prediction" query="query"',
             '       ng-repeat="prediction in predictions track by $index" ng-class="{\'pac-item-selected\': isActive($index) }"',
             '       ng-mouseenter="selectActive($index)" ng-click="selectPrediction($index)" role="option" id="{{prediction.id}}">',
             '  </div>',
+            '</div>',
+            '</div>',
             '</div>'
         ];
 
@@ -410,7 +436,11 @@ angular.module('google.places', [])
                 query: '=',
                 predictions: '=',
                 active: '=',
-                selected: '='
+                selected: '=',
+                minLength: '=?',
+                tooltipContent: '=?',
+                componentFocused: '='
+
             },
             template: TEMPLATE.join(''),
             link: function ($scope, element) {
@@ -423,6 +453,12 @@ angular.module('google.places', [])
                         $scope.position = getDrawerPosition($scope.input);
                     });
                 }
+
+                $scope.isOpenTooltip = function () {
+                    $scope.position = getDrawerPosition($scope.input);
+
+                    return ($scope.componentFocused && $scope.tooltipContent && $scope.query && $scope.minLength > 0 && $scope.query.length < $scope.minLength);
+                };
 
                 $scope.isOpen = function () {
                     return $scope.predictions.length > 0;
