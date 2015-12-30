@@ -246,6 +246,8 @@ angular.module('google.places', [])
 
                         $scope.query = viewValue;
 
+                        clearTimeout(request);
+
                         if (!(viewValue && isString(viewValue))) return viewValue;
                         if ($scope.minLength > viewValue.length) {
                             clearPredictions();
@@ -254,10 +256,7 @@ angular.module('google.places', [])
                         };
 
                         requestParam = angular.extend({ input: viewValue }, $scope.options);
-                        clearTimeout(request);
-
                         request = setTimeout(function () { getPlacePrediction(requestParam); }, 700);
-
 
                         if ($scope.forceSelection) {
                             return controller.$modelValue;
