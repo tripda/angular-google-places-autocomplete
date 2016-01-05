@@ -175,7 +175,11 @@ angular.module('google.places', [])
                     }
 
                     function onBlur(event) {
-                        $scope.componentFocused = false;
+                        $scope.$digest();
+                        
+                        $scope.$apply(function () {
+                            $scope.componentFocused = false;
+                        });
 
                         if ($scope.predictions.length === 0) {
                             return;
@@ -410,20 +414,18 @@ angular.module('google.places', [])
 
     .directive('gPlacesAutocompleteDrawer', ['$window', '$document', function ($window, $document) {
         var TEMPLATE = [
-            '<div class="pac-container bottom" ng-if="isOpenTooltip()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;">',
-            '<div class="arrow"></div>',
-            '<div class="pac-inner">',
-            '<div class="pac-content">{{tooltipContent}}</div>',
+            '<div class="pac-tooltip bottom" ng-if="isOpenTooltip()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;">',
+            '<div class="pac-tooltip-arrow"></div>',
+            '<div class="pac-tooltip-inner">',
+            '<div class="pac-tooltip-content">{{tooltipContent}}</div>',
             '</div>',
             '</div>',
-            '<div class="pac-container bottom" ng-if="isOpen()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;" role="listbox" aria-hidden="{{!isOpen()}}">',
-            '<div class="arrow"></div>',
+            '<div class="pac-container" ng-if="isOpen()" ng-style="{top: position.top+\'px\', left: position.left+\'px\', width: position.width+\'px\'}" style="display: block;" role="listbox" aria-hidden="{{!isOpen()}}">',
             '<div class="pac-content">',
             '  <div class="pac-item" g-places-autocomplete-prediction index="$index" prediction="prediction" query="query"',
             '       ng-repeat="prediction in predictions track by $index" ng-class="{\'pac-item-selected\': isActive($index) }"',
             '       ng-mouseenter="selectActive($index)" ng-click="selectPrediction($index)" role="option" id="{{prediction.id}}">',
             '  </div>',
-            '</div>',
             '</div>',
             '</div>'
         ];
